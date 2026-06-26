@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clasificador de mensajes GACH</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- App Styles -->
+    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="dark-theme.css?v=1">
+</head>
+
+<body>
+    <div class="layout">
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <div class="header-logo" style="display: flex; align-items: center; gap: 12px;">
+                        <div class="logo-icon" style="background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 82, 255, 0.3);">
+                            <i data-lucide="message-square" style="color: white; width: 20px; height: 20px;"></i>
+                        </div>
+                        <h1 style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin: 0; letter-spacing: -0.02em;">Clasificador de mensajes <span style="color: var(--primary-color);">GACH</span></h1>
+                    </div>
+                    <div class="search-container">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="global-search" class="search-input"
+                            placeholder="Buscar mensaje o palabra clave...">
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" id="theme-toggle-btn" title="Activar Modo Oscuro"><i data-lucide="moon" id="theme-icon"></i></button>
+                    
+                    <div style="position: relative;" id="header-notifications-wrapper">
+                        <button class="icon-btn" id="notifications-trigger" title="Novedades">
+                            <i data-lucide="bell"></i>
+                            <span class="notification-dot" id="notification-dot" style="display: none; position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; background-color: var(--danger); border-radius: 50%; border: 2px solid var(--card-bg);"></span>
+                        </button>
+                        
+                        <!-- Notificaciones Dropdown -->
+                        <div class="notifications-dropdown" id="notifications-dropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background-color: var(--card-bg); border: 1px solid var(--border-color); box-shadow: var(--shadow-lg); border-radius: var(--radius-md); width: 320px; z-index: 100; overflow: hidden; flex-direction: column;">
+                            <div style="padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                <h3 style="font-size: 1rem; font-weight: 600; margin: 0; color: var(--text-main);">Últimas Actualizaciones</h3>
+                            </div>
+                            <div id="notifications-list" style="max-height: 350px; overflow-y: auto; display: flex; flex-direction: column;">
+                                <!-- JS generará el historial aquí -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-primary" id="btn-new-message" style="display:none;"><i data-lucide="plus"></i> Nuevo Mensaje</button>
+                    
+                    <div style="width: 1px; height: 32px; background-color: var(--border-color); margin: 0 8px;"></div>
+                    
+                    <!-- Perfil de Usuario con Dropdown Flotante -->
+                    <div class="header-profile-wrapper" style="position: relative;" id="header-profile-wrapper">
+                        <div class="header-profile-trigger" id="profile-trigger" style="display: flex; align-items: center; gap: 12px; cursor: pointer; padding: 6px 12px; border-radius: var(--radius-sm); transition: background-color var(--transition-fast);">
+                            <img id="header-avatar" src="https://api.dicebear.com/7.x/avataaars/svg?seed=UIN&backgroundColor=e2e8f0" alt="User" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color);">
+                            <div class="user-info" style="display: flex; flex-direction: column;">
+                                <span class="user-name" id="header-user-name" style="font-weight: 600; font-size: 0.9rem; color: var(--text-main);">Equipo UIN</span>
+                                <span class="user-role" style="font-size: 0.75rem; color: var(--success); display: flex; align-items: center; gap: 4px;"><span style="width:6px; height:6px; border-radius:50%; background-color:var(--success); display:inline-block;"></span>Ventas</span>
+                            </div>
+                            <i data-lucide="chevron-down" style="width: 16px; height: 16px; color: var(--text-muted);"></i>
+                        </div>
+                        
+                        <!-- Menú Desplegable -->
+                        <div class="profile-dropdown" id="profile-dropdown" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; background-color: var(--card-bg); border: 1px solid var(--border-color); box-shadow: var(--shadow-md); border-radius: var(--radius-md); width: 220px; z-index: 100; overflow: hidden;">
+                            <nav class="dropdown-nav" style="display: flex; flex-direction: column; padding: 8px;">
+                                <a href="#" class="dropdown-item active" data-view="workspace" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-decoration: none; color: var(--text-main); font-weight: 500; font-size: 0.95rem; border-radius: var(--radius-sm); transition: background-color var(--transition-fast);">
+                                    <i data-lucide="home" style="width: 18px; height: 18px;"></i> Directorio
+                                </a>
+                                <a href="#" class="dropdown-item" data-view="settings" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-decoration: none; color: var(--text-main); font-weight: 500; font-size: 0.95rem; border-radius: var(--radius-sm); transition: background-color var(--transition-fast);">
+                                    <i data-lucide="settings" style="width: 18px; height: 18px;"></i> Configuración
+                                </a>
+                                <div style="height: 1px; background-color: var(--border-color); margin: 6px 0;"></div>
+                                <a href="#" id="logout-btn" class="dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-decoration: none; color: var(--danger); font-weight: 500; font-size: 0.95rem; border-radius: var(--radius-sm); transition: background-color var(--transition-fast);">
+                                    <i data-lucide="log-out" style="width: 18px; height: 18px;"></i> Cerrar Sesión
+                                </a>
+                            </nav>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- View: Workspace (View 1) -->
+            <section id="view-workspace" class="view active">
+                <div class="workspace-layout">
+                    <!-- Panel Izquierdo: Categorías y Conjuntos -->
+                    <div class="workspace-sidebar">
+                        
+                        <!-- Selector de Conjuntos -->
+                        <div class="conjuntos-wrapper" style="margin-bottom: 24px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin: 0;">Conjunto Activo</h3>
+                                <div style="display: flex; gap: 4px;">
+                                    <button id="btn-edit-conjunto" class="icon-btn" style="width:24px; height:24px;" title="Editar Conjunto">
+                                        <i data-lucide="edit-2" style="width:14px; height:14px;"></i>
+                                    </button>
+                                    <button id="btn-new-conjunto" class="icon-btn" style="width:24px; height:24px;" title="Nuevo Conjunto">
+                                        <i data-lucide="plus" style="width:14px; height:14px;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <select id="conjuntos-select" class="form-control" style="width: 100%; font-weight: 600; cursor: pointer;">
+                                <option value="">Cargando conjuntos...</option>
+                            </select>
+                        </div>
+
+                        <div class="sidebar-title"
+                            style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3>Categorías</h3>
+                            <button id="btn-new-category" class="icon-btn" style="width:24px; height:24px;"
+                                title="Añadir Categoría">
+                                <i data-lucide="plus" style="width:14px; height:14px;"></i>
+                            </button>
+                        </div>
+                        <div class="categories-list" id="directory-categories">
+                            <!-- Generado por JS -->
+                        </div>
+                        <div class="divider" style="margin: 16px 0; background-color: var(--border-color); height: 1px;"></div>
+                        <a href="#" class="category-nav-item sidebar-view-btn" data-view="trash" id="btn-global-trash" style="text-decoration: none;">
+                            <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px; background-color: rgba(239, 68, 68, 0.1); color: var(--danger);">
+                                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                            </div>
+                            <span class="category-text" style="color: var(--danger);">Papelera Global</span>
+                        </a>
+                    </div>
+
+                    <!-- Panel Central: Grid de Tarjetas Cuadradas -->
+                    <div class="workspace-main">
+                        <div class="main-title-bar">
+                            <h2 id="main-panel-title">Todos los Mensajes</h2>
+                        </div>
+                        <div id="messages-grid">
+                            <!-- Generado por JS -->
+                        </div>
+                    </div>
+
+                    <!-- Panel Derecho: Anclados y Recientes -->
+                    <div class="workspace-rightbar">
+                        <div class="right-panel-section">
+                            <h3 class="right-panel-title">
+                                <i data-lucide="pin" class="text-primary icon-sm"></i>
+                                Mensajes Anclados
+                            </h3>
+                            <ul class="right-panel-list" id="right-pinned">
+                                <!-- Generado por JS -->
+                            </ul>
+                        </div>
+
+                        <div class="right-panel-section mt-5">
+                            <h3 class="right-panel-title">
+                                <i data-lucide="clock" class="text-primary icon-sm"></i>
+                                Mensajes Recientes
+                            </h3>
+                            <ul class="right-panel-list" id="right-recent">
+                                <!-- Generado por JS -->
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Analytics (View 2) -->
+            <section id="view-analytics" class="view">
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; color: var(--text-muted); text-align: center;">
+                    <div style="background-color: var(--card-bg); padding: 40px; border-radius: var(--radius-lg); border: 1px solid var(--border-color); display: flex; flex-direction: column; align-items: center; max-width: 400px;">
+                        <i data-lucide="hard-hat" style="width: 64px; height: 64px; color: var(--primary-color); margin-bottom: 24px; opacity: 0.8;"></i>
+                        <h2 style="font-size: 1.5rem; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">En Construcción</h2>
+                        <p style="font-size: 0.95rem; line-height: 1.6; color: var(--text-muted);">La pestaña de analíticas estará disponible en una próxima actualización. Estamos trabajando para traerte las mejores métricas del rendimiento de tu equipo.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Papelera Global -->
+            <section id="view-trash" class="view">
+                <div class="view-header" style="margin-bottom: 24px;">
+                    <a href="#" class="sidebar-view-btn" data-view="workspace" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; margin-bottom: 16px; transition: color 0.2s;" onmouseover="this.style.color='var(--text-main)'" onmouseout="this.style.color='var(--text-muted)'">
+                        <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Volver al Directorio
+                    </a>
+                    <h1 style="display: flex; align-items: center; gap: 12px; color: var(--danger);">
+                        <i data-lucide="trash-2" style="width: 24px; height: 24px;"></i> Papelera Global
+                    </h1>
+                    <p style="color: var(--text-muted); margin-top: 8px;">Aquí encontrarás todos los conjuntos y mensajes eliminados en la plataforma.</p>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 40px;">
+                    <!-- Conjuntos Eliminados -->
+                    <div>
+                        <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Conjuntos Eliminados</h2>
+                        <div id="global-trash-conjuntos" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">
+                            <p style="color: var(--text-muted);">Cargando...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Mensajes Eliminados -->
+                    <div>
+                        <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">Mensajes Eliminados</h2>
+                        <div id="global-trash-mensajes" class="messages-square-grid">
+                            <p style="color: var(--text-muted);">Cargando...</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- View: Settings (View 3) -->
+            <section id="view-settings" class="view">
+                <div class="view-header">
+                    <h1>Configuración</h1>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+                    <!-- Ajustes de Perfil -->
+                    <div class="card" style="align-self: start;">
+                        <h3>Perfil de Agente</h3>
+                        <p class="subtitle" style="margin-bottom: 24px; font-size:0.9rem;">
+                            Personaliza tu identidad en la barra de navegación superior.
+                        </p>
+                        
+                        <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 24px;">
+                            <img id="settings-avatar-preview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=UIN&backgroundColor=e2e8f0" alt="Preview" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border-color);">
+                            <div>
+                                <label for="profile-photo-upload" class="btn-primary" style="background-color: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); cursor: pointer; display: inline-flex;">
+                                    <i data-lucide="camera" style="margin-right: 8px;"></i> Subir Foto
+                                </label>
+                                <input type="file" id="profile-photo-upload" accept="image/*" style="display: none;">
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 8px;">PNG, JPG, max 5MB (redimensionado automático).</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Nombre del Agente o Equipo</label>
+                            <input type="text" id="settings-profile-name" class="form-input" placeholder="Ej. Juan Pérez o Equipo UIN">
+                        </div>
+                        
+                        <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                            <button class="btn-primary" id="save-profile-btn">Guardar Perfil</button>
+                        </div>
+                    </div>
+
+                    <!-- Gestión de Datos -->
+                    <div class="card" style="align-self: start;">
+                        <h3>Gestión de Datos</h3>
+                        <p class="subtitle" style="margin-bottom: 24px; font-size:0.9rem;">
+                            Exporta tu base de datos actual para tener un respaldo o compártela con un compañero de equipo.
+                        </p>
+                        <div style="display:flex; flex-direction: column; gap:16px;">
+                            <button class="btn-primary" style="background-color: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); width: fit-content;">
+                                <i data-lucide="download"></i> Exportar Respaldo
+                            </button>
+                            <button class="btn-primary" style="width: fit-content;">
+                                <i data-lucide="upload"></i> Importar Datos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <i data-lucide="check-circle" class="toast-icon"></i>
+        <span id="toast-message">Acción realizada con éxito</span>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="edit-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2 id="message-modal-title">Editar Mensaje</h2>
+                <button class="icon-btn" id="close-message-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-id">
+                <div class="form-group">
+                    <label>Título del mensaje</label>
+                    <input type="text" id="edit-title" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="edit-category" class="form-control">
+                        <option value="INFORMACIÓN">INFORMACIÓN</option>
+                        <option value="SALUDOS">SALUDOS</option>
+                        <option value="CIERRES">CIERRES</option>
+                        <option value="SEGUIMIENTO">SEGUIMIENTO</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Texto del mensaje</label>
+                    <textarea id="edit-excerpt" class="form-control" rows="12"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancel-message-modal">Cancelar</button>
+                <button class="btn-primary" id="save-message-modal">Guardar Mensaje</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>Mover a la Papelera</h2>
+                <button class="icon-btn" id="close-delete-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Estás seguro de que deseas mover este elemento a la papelera?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancel-delete-modal">Cancelar</button>
+                <button class="btn-primary" id="confirm-delete-modal" style="background-color: var(--danger);">Mover a Papelera</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conjunto Modal -->
+    <div id="conjunto-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="conjunto-modal-title">Nuevo Conjunto</h2>
+                <button class="icon-btn" id="close-conjunto-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 16px; color: var(--text-muted); font-size: 0.9rem;">Organiza tus mensajes por campaña, equipo o departamento.</p>
+                <input type="hidden" id="edit-conjunto-id">
+                <div class="form-group">
+                    <label class="form-label">Nombre del Conjunto</label>
+                    <input type="text" id="new-conjunto-name" class="form-control" placeholder="Ej. Admisiones 2026">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="btn-delete-conjunto" style="color: var(--danger); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.07); display: none;">
+                    <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Eliminar
+                </button>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button class="btn-cancel" id="cancel-conjunto-modal">Cancelar</button>
+                    <button class="btn-primary" id="save-conjunto-modal">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Modal -->
+    <div id="category-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 440px;">
+            <div class="modal-header">
+                <h2 id="category-modal-title">Nueva Categoría</h2>
+                <button class="icon-btn" id="close-category-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-category-id">
+                <div class="form-group">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" id="new-category-name" class="form-control" placeholder="Ej. Información Académica">
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>Color de la Etiqueta</label>
+                    <div class="color-palette" id="category-color-palette" style="justify-content: space-between;">
+                        <button class="color-swatch bg-red" data-color="bg-red"></button>
+                        <button class="color-swatch bg-orange" data-color="bg-orange"></button>
+                        <button class="color-swatch bg-amber" data-color="bg-amber"></button>
+                        <button class="color-swatch bg-green" data-color="bg-green"></button>
+                        <button class="color-swatch bg-emerald" data-color="bg-emerald"></button>
+                        <button class="color-swatch bg-cyan" data-color="bg-cyan"></button>
+                        <button class="color-swatch bg-blue" data-color="bg-blue"></button>
+                        <button class="color-swatch bg-indigo" data-color="bg-indigo"></button>
+                        <button class="color-swatch bg-purple" data-color="bg-purple"></button>
+                        <button class="color-swatch bg-pink" data-color="bg-pink"></button>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>Icono de la Categoría</label>
+                    <div class="color-palette icon-palette" id="category-icon-palette">
+                        <button class="icon-swatch selected" data-icon="message-circle"><i data-lucide="message-circle"></i></button>
+                        <button class="icon-swatch" data-icon="book-open"><i data-lucide="book-open"></i></button>
+                        <button class="icon-swatch" data-icon="credit-card"><i data-lucide="credit-card"></i></button>
+                        <button class="icon-swatch" data-icon="file-text"><i data-lucide="file-text"></i></button>
+                        <button class="icon-swatch" data-icon="globe"><i data-lucide="globe"></i></button>
+                        <button class="icon-swatch" data-icon="headphones"><i data-lucide="headphones"></i></button>
+                        <button class="icon-swatch" data-icon="briefcase"><i data-lucide="briefcase"></i></button>
+                        <button class="icon-swatch" data-icon="shield"><i data-lucide="shield"></i></button>
+                        <button class="icon-swatch" data-icon="zap"><i data-lucide="zap"></i></button>
+                        <button class="icon-swatch" data-icon="star"><i data-lucide="star"></i></button>
+                        <button class="icon-swatch" data-icon="check-circle"><i data-lucide="check-circle"></i></button>
+                        <button class="icon-swatch" data-icon="pie-chart"><i data-lucide="pie-chart"></i></button>
+                        <button class="icon-swatch" data-icon="users"><i data-lucide="users"></i></button>
+                        <button class="icon-swatch" data-icon="target"><i data-lucide="target"></i></button>
+                        <button class="icon-swatch" data-icon="map-pin"><i data-lucide="map-pin"></i></button>
+                        <button class="icon-swatch" data-icon="folder"><i data-lucide="folder"></i></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                <button class="btn-cancel" id="btn-delete-category" style="color: var(--danger); border-color: rgba(239, 68, 68, 0.3); background-color: rgba(239, 68, 68, 0.07); display: none;">
+                    <i data-lucide="trash-2" style="width:15px;height:15px;"></i> Eliminar
+                </button>
+                <div style="display: flex; gap: 8px; margin-left: auto;">
+                    <button class="btn-cancel" id="cancel-category-modal">Cancelar</button>
+                    <button class="btn-primary" id="save-category-modal">Añadir Categoría</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Category Modal -->
+    <div id="delete-category-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Eliminar Categoría</h2>
+                <button class="icon-btn" id="close-delete-category-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <p>¿Qué deseas hacer con los mensajes que están en esta categoría?</p>
+                
+                <div class="form-group" style="margin-top: 16px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px; border: 1px solid var(--border-color); border-radius: var(--radius-sm); margin-bottom: 8px; background-color: var(--bg-color);">
+                        <input type="radio" name="delete-category-action" value="uncategorize" checked>
+                        <div>
+                            <span style="font-weight: 600; display: block; color: var(--text-main);">Mantener los mensajes</span>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Los mensajes pasarán a estar "Sin categoría" (visibles en Todos los mensajes).</span>
+                        </div>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 12px; border: 1px solid var(--danger); border-radius: var(--radius-sm); background-color: rgba(239, 68, 68, 0.05);">
+                        <input type="radio" name="delete-category-action" value="trash">
+                        <div>
+                            <span style="font-weight: 600; display: block; color: var(--danger);">Mover a la Papelera</span>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">Los mensajes se moverán a la papelera por 30 días.</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" id="cancel-delete-category-modal">Cancelar</button>
+                <button class="btn-primary" id="confirm-delete-category-modal" style="background-color: var(--danger);">Eliminar Definitivamente</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Reading Modal (Full View) -->
+    <div id="reading-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+                <h2 id="reading-modal-title" style="font-size: 1.25rem;">Vista Completa</h2>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="icon-actions" style="margin-right: 8px;">
+                        <button class="icon-action-btn" id="reading-btn-pin" title="Anclar/Desanclar mensaje">
+                            <i data-lucide="pin" id="reading-icon-pin"></i>
+                        </button>
+                        <button class="icon-action-btn" id="reading-btn-copy" title="Copiar al portapapeles">
+                            <i data-lucide="copy"></i>
+                        </button>
+                    </div>
+                    <button class="icon-btn" id="close-reading-modal"><i data-lucide="x"></i></button>
+                </div>
+            </div>
+            <div class="modal-body" style="padding-top: 16px; padding-bottom: 24px;">
+                <div id="reading-modal-content" class="reading-modal-body">
+                    <!-- Text inserted dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorial-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>👋 Bienvenido a GACH</h2>
+                <button class="icon-btn" id="close-tutorial-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <div style="margin-bottom: 24px;">
+                    <i data-lucide="compass" style="width: 48px; height: 48px; color: var(--primary-color);"></i>
+                </div>
+                <h3 style="margin-bottom: 12px; color: var(--text-main);">Tu nuevo Clasificador de Mensajes</h3>
+                <p style="color: var(--text-muted); margin-bottom: 16px; line-height: 1.6;">
+                    Organiza todos tus mensajes, respuestas rápidas y plantillas en un solo lugar.
+                </p>
+                <ul style="text-align: left; background-color: var(--bg-color); padding: 16px; border-radius: var(--radius-md); list-style: none; display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; font-size: 0.95rem;">
+                    <li style="display: flex; gap: 12px; align-items: flex-start;">
+                        <i data-lucide="folder" style="color: var(--primary-color); width: 20px; height: 20px; flex-shrink: 0;"></i>
+                        <span><strong>Crea Conjuntos:</strong> Agrupa tus mensajes por campañas o departamentos.</span>
+                    </li>
+                    <li style="display: flex; gap: 12px; align-items: flex-start;">
+                        <i data-lucide="tag" style="color: var(--primary-color); width: 20px; height: 20px; flex-shrink: 0;"></i>
+                        <span><strong>Usa Categorías:</strong> Clasifica con colores e íconos para encontrar rápido lo que necesitas.</span>
+                    </li>
+                    <li style="display: flex; gap: 12px; align-items: flex-start;">
+                        <i data-lucide="copy" style="color: var(--primary-color); width: 20px; height: 20px; flex-shrink: 0;"></i>
+                        <span><strong>Copia y Pega:</strong> Con un solo clic tendrás tu mensaje listo para enviar.</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="btn-primary" id="btn-finish-tutorial" style="width: 100%; justify-content: center;">¡Comenzar a usar!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Logic -->
+    <script type="module" src="src/app-supabase.js?v=29"></script>
+    <script src="theme.js?v=1"></script>
+</body>
+
+</html>

@@ -1,0 +1,84 @@
+/* =========================================
+   MODO OSCURO SEPARADO (DARK THEME)
+   ========================================= */
+
+/* Solo se aplica cuando el HTML o body tienen el atributo data-theme="dark" */
+:root[data-theme="dark"] {
+    /* Colors Generales Invertidos */
+    --bg-color: #0f172a;        /* Azul medianoche profundo (Fondo general) */
+    --card-bg: #1e293b;         /* Azul grisáceo pizarroso oscuro (Tarjetas) */
+    --text-main: #f8fafc;       /* Gris muy claro / Blanco tiza (Texto primario) */
+    --text-muted: #94a3b8;      /* Gris intermedio opaco (Subtítulos, fechas) */
+    --border-color: #334155;    /* Gris slate oscuro para bordes notorios pero sutiles */
+    
+    /* El Primary Color (azul vibrante) sigue viéndose genial en negro */
+    /* Lo mantenemos igual, o lo hacemos ligeramente más brillante si queremos */
+    --primary-color: #3b82f6; 
+    --primary-hover: #60a5fa;
+
+    /* Sombras ajustadas para pantallas oscuras (sin resplandores feos) */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+
+    /* Ajuste especial de transparencias de modales para el modo oscuro */
+    --modal-backdrop: rgba(15, 23, 42, 0.85); /* Un fondo semitransparente oscuro */
+}
+
+/* 
+   Ajustes Críticos Adicionales:
+   Hay colores dinámicos predeterminados para las categorías en style.css.
+   En una app puramente oscura, esos colores de fondo pasteles (ej. bg-red: #FCA5A5) 
+   brillan demasiado. Vamos a reducir su opacidad a nivel de variables:
+*/
+
+:root[data-theme="dark"] {
+    /* Paleta Dinámica de Categorías Ajustada al Dark Mode (Cajas más oscuras, texto más brillante) */
+    --bg-red: #451a1a;
+    --text-red: #fca5a5;
+    
+    --bg-orange: #432414;
+    --text-orange: #fdba74;
+    
+    --bg-amber: #452910;
+    --text-amber: #fcd34d;
+    
+    --bg-green: #143521;
+    --text-green: #86efac;
+    
+    --bg-emerald: #103325;
+    --text-emerald: #6ee7b7;
+    
+    --bg-cyan: #163642;
+    --text-cyan: #67e8f9;
+    
+    --bg-blue: #1e3a8a;
+    --text-blue: #93c5fd;
+    
+    --bg-indigo: #312e81;
+    --text-indigo: #a5b4fc;
+    
+    --bg-purple: #4c1d95;
+    --text-purple: #d8b4fe;
+    
+    --bg-pink: #500724;
+    --text-pink: #f9a8d4;
+}
+
+/* Modales e inputs */
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] textarea,
+:root[data-theme="dark"] select {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    border-color: var(--border-color);
+}
+
+:root[data-theme="dark"] .reading-modal-body {
+    background: #1e293b;
+}
+
+/* Hover effects en modo oscuro a veces son más sutiles */
+:root[data-theme="dark"] .btn-copy {
+    background-color: rgba(59, 130, 246, 0.15); /* primary con opacidad */
+}
