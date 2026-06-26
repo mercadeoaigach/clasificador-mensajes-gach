@@ -289,7 +289,7 @@ body {
 
 .btn-copy {
     background-color: rgba(0, 82, 255, 0.08);
-    居 color: var(--primary-color);
+    color: var(--primary-color);
     border: 1px solid transparent;
     padding: 8px 16px;
     border-radius: var(--radius-sm);
