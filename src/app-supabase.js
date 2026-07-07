@@ -1,12 +1,14 @@
 import { supabase } from '../supabase.js';
+import { defaultWorkspaceCategories, defaultAppMessages } from '../generated_app_data.js';
 
 // --- ESTADO GLOBAL ---
 let currentUser = null;
 let allConjuntos = [];
 let workspaceCategories = [];
+let allSubcategorias = [];
 let allMessages = [];
-let activeConjuntoId = null;
-let activeCategoryId = 'all';
+let activeConjuntoId = localStorage.getItem('uin_activeConjuntoId') || null;
+let activeCategoryId = localStorage.getItem('uin_activeCategoryId') || 'all';
 let searchQuery = '';
 
 // Elementos del DOM
@@ -15,6 +17,12 @@ const conjuntosSelect = document.getElementById('conjuntos-select');
 const btnNewConjunto = document.getElementById('btn-new-conjunto');
 const conjuntoModal = document.getElementById('conjunto-modal');
 const inputConjuntoName = document.getElementById('new-conjunto-name');
+
+// DOM Refs Subcategoría
+const subcategoriaModal = document.getElementById('subcategoria-modal');
+const inputSubcategoriaName = document.getElementById('new-subcategoria-name');
+const inputSubcategoriaOldName = document.getElementById('edit-subcategoria-old-name');
+
 
 // --- AUTENTICACIÓN ---
 async function checkAuth() {
@@ -159,7 +167,10 @@ async function loadConjuntos() {
         conjuntosSelect.innerHTML = '<option value="">Error de carga</option>';
         return;
     }
-    allConjuntos = data;
+    allConjuntos = data || [];
+    
+
+
     renderConjuntos();
     
     // Si el activo actual fue borrado, o no hay, seleccionar el primero activo
@@ -171,6 +182,7 @@ async function loadConjuntos() {
             activeConjuntoId = allConjuntos[0].id; // Fallback a los de papelera si solo hay eso
         }
     }
+    if (activeConjuntoId) localStorage.setItem('uin_activeConjuntoId', activeConjuntoId);
     
     if (allConjuntos.length > 0) {
         conjuntosSelect.value = activeConjuntoId;
@@ -183,6 +195,11 @@ async function loadConjuntos() {
 
 async function loadDataForConjunto(conjuntoId) {
     if (!conjuntoId) return;
+
+    // Restaurar perfil original si salimos de la vista previa
+    if (typeof loadUserProfile === 'function') {
+        loadUserProfile();
+    }
     
     // Cargar categorías del conjunto
     const { data: categorias, error: errCat } = await supabase.from('categorias').select('*').eq('conjunto_id', conjuntoId);
@@ -193,12 +210,19 @@ async function loadDataForConjunto(conjuntoId) {
     if (catIds.length > 0) {
         const { data: mensajes, error: errMsg } = await supabase.from('mensajes').select('*').in('categoria_id', catIds).order('created_at', { ascending: false });
         if (!errMsg) allMessages = mensajes;
+
+        const { data: subs, error: errSub } = await supabase.from('subcategorias').select('*').in('categoria_id', catIds);
+        if (!errSub) allSubcategorias = subs;
     } else {
         allMessages = [];
+        allSubcategorias = [];
     }
 
     // Renderizado UI
-    activeCategoryId = 'all';
+    if (activeCategoryId !== 'trash' && !workspaceCategories.find(c => c.id === activeCategoryId)) {
+        activeCategoryId = 'all';
+        localStorage.setItem('uin_activeCategoryId', 'all');
+    }
     document.getElementById('btn-new-message').style.display = 'inline-flex';
     
     renderCategories();
@@ -209,6 +233,7 @@ async function loadDataForConjunto(conjuntoId) {
 
 conjuntosSelect.addEventListener('change', async (e) => {
     activeConjuntoId = e.target.value;
+    localStorage.setItem('uin_activeConjuntoId', activeConjuntoId);
     if (activeConjuntoId) {
         await loadDataForConjunto(activeConjuntoId);
     }
@@ -233,8 +258,8 @@ function renderConjuntos() {
 function renderCategories() {
     let html = `
         <div class="category-nav-item ${activeCategoryId === 'all' ? 'active' : ''}" data-id="all">
-            <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; background-color: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-muted);">
-                <i data-lucide="inbox" style="width: 16px; height: 16px;"></i>
+            <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0; background-color: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-muted);">
+                <i data-lucide="inbox" style="width: 14px; height: 14px;"></i>
             </div>
             <span class="category-text">Todos los mensajes</span>
         </div>
@@ -242,10 +267,10 @@ function renderCategories() {
 
     html += workspaceCategories.map(cat => {
         const isActive = cat.id === activeCategoryId;
-        return `
+        let catHtml = `
             <div class="category-nav-item ${isActive ? 'active' : ''}" data-id="${cat.id}">
-                <div style="display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 8px;" class="${cat.color}">
-                    <i data-lucide="${cat.icon || 'message-circle'}" style="width: 16px; height: 16px;"></i>
+                <div style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex-shrink: 0; border-radius: 6px;" class="${cat.color}">
+                    <i data-lucide="${cat.icon || 'message-circle'}" style="width: 14px; height: 14px;"></i>
                 </div>
                 <span class="category-text">${cat.name}</span>
                 <div class="category-actions">
@@ -255,6 +280,20 @@ function renderCategories() {
                 </div>
             </div>
         `;
+        
+        if (isActive) {
+            const subs = allSubcategorias.filter(s => s.categoria_id === cat.id);
+            if (subs.length > 0) {
+                catHtml += `<div class="subcategory-nav-list" style="padding-left: 32px; margin-top: -4px; margin-bottom: 8px; display: flex; flex-direction: column; gap: 4px;">`;
+                subs.forEach(s => {
+                    catHtml += `<div class="subcategory-nav-item" data-name="${s.name}" style="padding: 4px 8px; color: var(--text-muted); font-size: 0.7rem; cursor: pointer; border-radius: 4px; transition: background 0.2s;">
+                        └ ${s.name}
+                    </div>`;
+                });
+                catHtml += `</div>`;
+            }
+        }
+        return catHtml;
     }).join('');
     // Papelera antigua eliminada
     
@@ -289,8 +328,34 @@ function renderCategories() {
                 return;
             }
             activeCategoryId = e.currentTarget.getAttribute('data-id');
+            localStorage.setItem('uin_activeCategoryId', activeCategoryId);
             renderCategories();
             renderMessages();
+        });
+    });
+
+    document.querySelectorAll('.subcategory-nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation(); // prevent clicking the parent category again
+            const subName = e.currentTarget.getAttribute('data-name');
+            const targetId = 'subcat-' + subName.replace(/\\s+/g, '-');
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) {
+                const scrollContainer = document.querySelector('.view.active');
+                if (scrollContainer) {
+                    const containerRect = scrollContainer.getBoundingClientRect();
+                    const targetRect = targetEl.getBoundingClientRect();
+                    const relativeTop = targetRect.top - containerRect.top + scrollContainer.scrollTop;
+                    scrollContainer.scrollTo({
+                        top: relativeTop - 20, // Ajustado porque el contenedor de scroll ya no queda por debajo del header
+                        behavior: 'smooth'
+                    });
+                }
+                // Optional visual highlight
+                targetEl.style.transition = 'background-color 0.5s';
+                targetEl.style.backgroundColor = 'rgba(100, 100, 100, 0.1)';
+                setTimeout(() => targetEl.style.backgroundColor = 'transparent', 1000);
+            }
         });
     });
 }
@@ -309,7 +374,9 @@ function renderMessages() {
             if (catId === 'trash' && !isDeleted) return false;
             if (catId !== 'trash' && isDeleted) return false;
             
-            const matchesCat = (catId === 'all' || catId === 'trash' || m.categoria_id === catId);
+            // Support both supabase column and local mock data property
+            const msgCatId = m.categoria_id || m.categoryId;
+            const matchesCat = (catId === 'all' || catId === 'trash' || msgCatId === catId);
             const rawTitle = m.title.toLowerCase();
             const rawExcerpt = m.excerpt.toLowerCase();
             return matchesCat && (!searchVal || rawTitle.includes(searchVal) || rawExcerpt.includes(searchVal));
@@ -318,11 +385,75 @@ function renderMessages() {
 
     const msgsToRender = filterMsgs(allMessages, activeCategoryId);
 
+    // Dynamic title
+    const panelTitle = document.getElementById('main-panel-title');
+    if (panelTitle) {
+        if (activeCategoryId === 'all') {
+            panelTitle.innerHTML = `<span style="display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700;">
+                <div style="display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+                    <i data-lucide="inbox" style="width: 22px; height: 22px;"></i>
+                </div>
+                Todos los Mensajes
+            </span>`;
+        } else if (activeCategoryId === 'trash') {
+            panelTitle.innerHTML = `<span style="display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700; color: var(--danger);">
+                <div style="display: flex; align-items: center; justify-content: center; background-color: rgba(239, 68, 68, 0.1); color: var(--danger); border-radius: 8px; width: 36px; height: 36px;">
+                    <i data-lucide="trash-2" style="width: 22px; height: 22px;"></i>
+                </div>
+                Papelera (30 días)
+            </span>`;
+        } else {
+            const activeCat = getCatObj(activeCategoryId);
+            panelTitle.innerHTML = `<span style="display: flex; align-items: center; gap: 12px; font-size: 1.5rem; font-weight: 700;">
+                <div style="display: flex; align-items: center; justify-content: center; background-color: transparent !important;" class="${activeCat.color}">
+                    <i data-lucide="${activeCat.icon}" style="width: 22px; height: 22px;"></i>
+                </div>
+                ${activeCat.name}
+            </span>`;
+        }
+    }
+
     if (msgsToRender.length === 0) {
         html = '<p style="text-align:center; padding: 40px; width: 100%; color: var(--text-muted);">No hay mensajes aquí.</p>';
     } else {
-        html = '<div class="messages-square-grid" style="margin-bottom: 32px;">' + msgsToRender.map(msg => {
-            const catObj = getCatObj(msg.categoria_id);
+        const grouped = {};
+        
+        // 1. Inicializar los grupos basados en allSubcategorias para que se muestren aunque estén vacíos
+        if (activeCategoryId !== 'all' && activeCategoryId !== 'trash') {
+            grouped['General'] = []; // Siempre mostrar la zona general
+            const subsForCat = allSubcategorias.filter(s => s.categoria_id === activeCategoryId);
+            subsForCat.forEach(s => {
+                grouped[s.name] = [];
+            });
+        }
+        
+        // 2. Llenar los mensajes
+        msgsToRender.forEach(msg => {
+            const sc = msg.sub_categoria || msg.subCategory || 'General';
+            if (!grouped[sc]) grouped[sc] = [];
+            grouped[sc].push(msg);
+        });
+
+        let fullHtml = '';
+        const groups = Object.keys(grouped).sort((a,b) => a === 'General' ? -1 : (b === 'General' ? 1 : a.localeCompare(b)));
+
+        groups.forEach(groupName => {
+            if (groupName !== 'General' && Object.keys(grouped).length > 0) {
+                fullHtml += `<div id="subcat-${groupName.replace(/\\s+/g, '-')}" style="display:flex; align-items:center; gap:8px; margin-top: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                    <h4 style="margin:0; font-size: 0.95rem; color: var(--primary-color); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;">${groupName}</h4>
+                    <button class="icon-action-btn edit-subcat-btn" data-name="${groupName}" style="width: 24px; height: 24px;"><i data-lucide="edit-2" style="width:12px; height:12px;"></i></button>
+                </div>`;
+            }
+            let gridHtml = `<div class="messages-square-grid" data-division="${groupName}" style="margin-bottom: 24px;">`;
+            if (grouped[groupName].length === 0) {
+                const emptyText = groupName === 'General' ? 'Soltar fuera de la división' : 'Arrastra un mensaje aquí';
+                gridHtml += `<div class="empty-division-placeholder" data-division="${groupName}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--text-muted); font-size: 0.9rem; background-color: var(--card-bg); border: 2px dashed var(--border-color); border-radius: 12px; transition: all 0.2s ease;">
+                    <i data-lucide="inbox" style="width:24px; height:24px; margin-bottom:8px; opacity:0.5;"></i>
+                    <span style="opacity: 0.7;">${emptyText}</span>
+                </div>`;
+            } else {
+                gridHtml += grouped[groupName].map(msg => {
+                const catObj = getCatObj(msg.categoria_id || msg.categoryId); // fallback for dummy data categoryId
             const isTrash = !!msg.deleted_at;
             
             let actionsHtml = '';
@@ -353,7 +484,7 @@ function renderMessages() {
             }
 
             return `
-                <div class="square-card ${isTrash ? 'trash-card' : ''}" style="${isTrash ? 'border-color: rgba(239, 68, 68, 0.3); opacity: 0.85;' : ''}">
+                <div class="square-card ${isTrash ? 'trash-card' : ''}" draggable="${!isTrash}" data-id="${msg.id}" style="${isTrash ? 'border-color: rgba(239, 68, 68, 0.3); opacity: 0.85;' : ''}">
                     <div class="square-card-header">
                         <div class="square-card-icon ${catObj.color}">
                             <i data-lucide="${catObj.icon}"></i>
@@ -366,11 +497,49 @@ function renderMessages() {
                     <p class="square-card-excerpt" data-id="${msg.id}" title="Clic para expandir" style="cursor: pointer;">${msg.excerpt}</p>
                 </div>
             `;
-        }).join('') + '</div>';
+        }).join('');
+                
+                // Dropzone fantasma al final de cada división o sección general
+                const phantomText = groupName === 'General' ? 'Soltar fuera de la división' : 'Añadir a esta división';
+                gridHtml += `
+                <div class="empty-division-placeholder phantom-dropzone" data-division="${groupName}" style="display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.85rem; background-color: transparent; border: 2px dashed var(--border-color); border-radius: 12px; transition: all 0.2s ease; min-height: 120px;">
+                    <i data-lucide="plus" style="width:24px; height:24px; margin-bottom:8px; opacity:0.5;"></i>
+                    <span style="opacity: 0.7;">${phantomText}</span>
+                </div>
+                `;
+            }
+            gridHtml += `</div>`;
+            fullHtml += gridHtml;
+        });
+        
+        // Agregar botón de nueva división si estamos en una categoría específica
+        if (activeCategoryId !== 'all' && activeCategoryId !== 'trash') {
+            fullHtml += `
+            <div style="margin-top: 24px; text-align: center; display: flex; justify-content: center;">
+                <button class="btn-secondary" id="btn-add-division" style="background-color: var(--sidebar-bg); border: 1px dashed var(--border-color); color: var(--text-muted); width: 100%; max-width: 400px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i data-lucide="plus"></i> Nueva División
+                </button>
+            </div>`;
+        }
+        
+        html = fullHtml;
     }
 
     document.getElementById('messages-grid').innerHTML = html;
     lucide.createIcons();
+    
+    // Asignar eventos de subcategorías
+    document.querySelectorAll('.edit-subcat-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const name = e.currentTarget.getAttribute('data-name');
+            openSubcategoriaModal(name);
+        });
+    });
+    const btnAddDiv = document.getElementById('btn-add-division');
+    if (btnAddDiv) {
+        btnAddDiv.addEventListener('click', () => openSubcategoriaModal());
+    }
+
 }
 
 function renderRightPinned() {
@@ -388,7 +557,7 @@ function renderRightPinned() {
                     </button>
                 </div>
             </div>
-            <span class="right-item-meta">${getCatObj(item.categoria_id).name}</span>
+            <span class="right-item-meta">${getCatObj(item.categoria_id || item.categoryId).name}</span>
         </li>
     `).join('');
     document.getElementById('right-pinned').innerHTML = html || '<p style="color:var(--text-muted); font-size:0.8rem; padding: 10px 0;">No hay mensajes anclados</p>';
@@ -405,7 +574,7 @@ function renderRightRecent() {
                     <i data-lucide="copy" style="width:14px; height:14px;"></i>
                 </button>
             </div>
-            <span class="right-item-meta">${getCatObj(item.categoria_id).name}</span>
+            <span class="right-item-meta">${getCatObj(item.categoria_id || item.categoryId).name}</span>
         </li>
     `).join('');
     document.getElementById('right-recent').innerHTML = html || '<p style="color:var(--text-muted); font-size:0.8rem; padding: 10px 0;">No hay mensajes</p>';
@@ -563,13 +732,27 @@ document.body.addEventListener('click', async (e) => {
     const editBtn = e.target.closest('.btn-edit');
     if (editBtn) {
         const id = editBtn.getAttribute('data-id');
-        const msg = allMessages.find(m => m.id === id);
+        const msg = allMessages.find(m => String(m.id) === String(id));
         if (msg) {
             document.getElementById('edit-id').value = msg.id;
             document.getElementById('edit-title').value = msg.title;
             document.getElementById('edit-excerpt').value = msg.excerpt;
+            
+            const catId = msg.categoria_id || msg.categoryId;
             document.getElementById('edit-category').innerHTML = workspaceCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            document.getElementById('edit-category').value = msg.categoria_id;
+            document.getElementById('edit-category').value = catId;
+            
+            // Subcategorias
+            const selectSub = document.getElementById('edit-subcategory');
+            const subs = allSubcategorias.filter(s => s.categoria_id === catId).map(s => s.name);
+            selectSub.innerHTML = '<option value="">General (Sin división)</option>' + subs.map(s => `<option value="${s}">${s}</option>`).join('');
+            selectSub.value = msg.sub_categoria || msg.subCategory || '';
+            
+            document.getElementById('edit-category').onchange = (e) => {
+                const newCatId = e.target.value;
+                const newSubs = allSubcategorias.filter(s => s.categoria_id === newCatId).map(s => s.name);
+                selectSub.innerHTML = '<option value="">General (Sin división)</option>' + newSubs.map(s => `<option value="${s}">${s}</option>`).join('');
+            };
             
             initialMessageState = { title: msg.title, excerpt: msg.excerpt }; // Guardar estado
             document.getElementById('edit-modal').classList.add('show');
@@ -581,13 +764,15 @@ document.body.addEventListener('click', async (e) => {
     const pinBtn = e.target.closest('.btn-pin, .btn-unpin');
     if (pinBtn) {
         const id = pinBtn.getAttribute('data-id');
-        const msg = allMessages.find(m => m.id === id);
+        const msg = allMessages.find(m => String(m.id) === String(id));
         if (msg) {
             const newState = !msg.is_pinned;
             msg.is_pinned = newState; // optimistic UI update
             renderMessages();
             renderRightPinned();
-            await supabase.from('mensajes').update({ is_pinned: newState }).eq('id', id);
+            if (activeConjuntoId !== 'local-preview') {
+                await supabase.from('mensajes').update({ is_pinned: newState }).eq('id', id);
+            }
         }
         return;
     }
@@ -604,8 +789,16 @@ document.body.addEventListener('click', async (e) => {
     const restoreBtn = e.target.closest('.btn-restore');
     if (restoreBtn) {
         const id = restoreBtn.getAttribute('data-id');
-        await supabase.from('mensajes').update({ deleted_at: null }).eq('id', id);
-        await loadDataForConjunto(activeConjuntoId); // Recargar
+        if (activeConjuntoId === 'local-preview') {
+            const msg = allMessages.find(m => String(m.id) === String(id));
+            if (msg) {
+                msg.deleted_at = null;
+                renderMessages();
+            }
+        } else {
+            await supabase.from('mensajes').update({ deleted_at: null }).eq('id', id);
+            await loadDataForConjunto(activeConjuntoId); // Recargar
+        }
         return;
     }
 
@@ -614,8 +807,13 @@ document.body.addEventListener('click', async (e) => {
     if (hardDeleteBtn) {
         if (confirm("⚠️ ¿Eliminar definitivamente? Esta acción no se puede deshacer.")) {
             const id = hardDeleteBtn.getAttribute('data-id');
-            await supabase.from('mensajes').delete().eq('id', id);
-            await loadDataForConjunto(activeConjuntoId); // Recargar
+            if (activeConjuntoId === 'local-preview') {
+                allMessages = allMessages.filter(m => String(m.id) !== String(id));
+                renderMessages();
+            } else {
+                await supabase.from('mensajes').delete().eq('id', id);
+                await loadDataForConjunto(activeConjuntoId); // Recargar
+            }
         }
         return;
     }
@@ -627,18 +825,28 @@ document.getElementById('cancel-delete-modal').addEventListener('click', () => d
 document.getElementById('confirm-delete-modal').addEventListener('click', async () => {
     if (messageToDeleteId) {
         document.getElementById('confirm-delete-modal').textContent = 'Borrando...';
-        // Soft delete (mover a papelera virtual poniendo deleted_at)
-        await supabase.from('mensajes').update({ deleted_at: new Date().toISOString() }).eq('id', messageToDeleteId);
-        deleteModal.classList.remove('show');
-        document.getElementById('confirm-delete-modal').textContent = 'Mover a Papelera';
-        await loadDataForConjunto(activeConjuntoId); // Recargar
+        if (activeConjuntoId === 'local-preview') {
+            const msg = allMessages.find(m => String(m.id) === String(messageToDeleteId));
+            if (msg) {
+                msg.deleted_at = new Date().toISOString();
+                renderMessages();
+            }
+            deleteModal.classList.remove('show');
+            document.getElementById('confirm-delete-modal').textContent = 'Mover a Papelera';
+        } else {
+            // Soft delete (mover a papelera virtual poniendo deleted_at)
+            await supabase.from('mensajes').update({ deleted_at: new Date().toISOString() }).eq('id', messageToDeleteId);
+            deleteModal.classList.remove('show');
+            document.getElementById('confirm-delete-modal').textContent = 'Mover a Papelera';
+            await loadDataForConjunto(activeConjuntoId); // Recargar
+        }
     }
 });
 
 // --- LÓGICA DE LECTURA (MODAL) ---
 let currentReadingId = null;
 function openReadingModal(id) {
-    const msg = allMessages.find(m => m.id === id);
+    const msg = allMessages.find(m => String(m.id) === String(id));
     if (!msg) return;
     currentReadingId = id;
     
@@ -665,7 +873,7 @@ document.getElementById('close-reading-modal')?.addEventListener('click', () => 
 });
 
 document.getElementById('reading-btn-copy')?.addEventListener('click', () => {
-    const msg = allMessages.find(m => m.id === currentReadingId);
+    const msg = allMessages.find(m => String(m.id) === String(currentReadingId));
     if (msg) {
         navigator.clipboard.writeText(msg.excerpt).then(() => {
             document.getElementById('reading-modal').classList.remove('show');
@@ -674,6 +882,29 @@ document.getElementById('reading-btn-copy')?.addEventListener('click', () => {
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2000);
         });
+    }
+});
+
+document.getElementById('reading-btn-pin')?.addEventListener('click', async () => {
+    const msg = allMessages.find(m => String(m.id) === String(currentReadingId));
+    if (msg) {
+        const newState = !msg.is_pinned;
+        msg.is_pinned = newState; // optimistic UI update
+        const pinIcon = document.getElementById('reading-icon-pin');
+        if (pinIcon) {
+            if (newState) {
+                pinIcon.classList.add('text-primary');
+                pinIcon.style.fill = 'currentColor';
+            } else {
+                pinIcon.classList.remove('text-primary');
+                pinIcon.style.fill = 'none';
+            }
+        }
+        renderMessages();
+        renderRightPinned();
+        if (activeConjuntoId !== 'local-preview') {
+            await supabase.from('mensajes').update({ is_pinned: newState }).eq('id', currentReadingId);
+        }
     }
 });
 
@@ -807,35 +1038,67 @@ document.getElementById('save-message-modal').addEventListener('click', async ()
     const title = inputMessageTitle.value.trim();
     const excerpt = inputMessageExcerpt.value.trim();
     const catId = inputMessageCategory.value;
+    const subCat = document.getElementById('edit-subcategory').value || null;
     
     if (!title || !excerpt) return alert("Título y mensaje son obligatorios");
     
     document.getElementById('save-message-modal').textContent = 'Guardando...';
     
-    let error;
-    if (id) {
-        // Actualizar mensaje existente
-        const { error: updateError } = await supabase.from('mensajes').update({
-            categoria_id: catId,
-            title: title,
-            excerpt: excerpt
-        }).eq('id', id);
-        error = updateError;
-    } else {
-        // Crear nuevo mensaje
-        const { error: insertError } = await supabase.from('mensajes').insert([{
-            categoria_id: catId,
-            title: title,
-            excerpt: excerpt
-        }]);
-        error = insertError;
-    }
-    
-    if (error) alert("Error: " + error.message);
-    else {
-        initialMessageState = { title: title, excerpt: excerpt }; // reset para que no salte alerta
+    if (activeConjuntoId === 'local-preview') {
+        if (id) {
+            const m = allMessages.find(msg => String(msg.id) === String(id));
+            if (m) {
+                m.title = title;
+                m.excerpt = excerpt;
+                m.categoria_id = catId;
+                m.categoryId = catId;
+                m.sub_categoria = subCat;
+                m.subCategory = subCat;
+            }
+        } else {
+            allMessages.unshift({
+                id: 'mock_msg_' + Date.now(),
+                title: title,
+                excerpt: excerpt,
+                categoria_id: catId,
+                categoryId: catId,
+                sub_categoria: subCat,
+                subCategory: subCat,
+                is_pinned: false,
+                created_at: new Date().toISOString()
+            });
+        }
+        initialMessageState = { title: title, excerpt: excerpt };
         messageModal.classList.remove('show');
-        await loadDataForConjunto(activeConjuntoId);
+        renderMessages();
+    } else {
+        let error;
+        if (id) {
+            // Actualizar mensaje existente
+            const { error: updateError } = await supabase.from('mensajes').update({
+                categoria_id: catId,
+                title: title,
+                excerpt: excerpt,
+                sub_categoria: subCat
+            }).eq('id', id);
+            error = updateError;
+        } else {
+            // Crear nuevo mensaje
+            const { error: insertError } = await supabase.from('mensajes').insert([{
+                categoria_id: catId,
+                title: title,
+                excerpt: excerpt,
+                sub_categoria: subCat
+            }]);
+            error = insertError;
+        }
+        
+        if (error) alert("Error: " + error.message);
+        else {
+            initialMessageState = { title: title, excerpt: excerpt };
+            messageModal.classList.remove('show');
+            await loadDataForConjunto(activeConjuntoId);
+        }
     }
     document.getElementById('save-message-modal').textContent = 'Guardar Mensaje';
 });
@@ -1066,3 +1329,247 @@ async function initApp() {
 }
 
 initApp();
+
+// --- Lógica de Subcategorías ---
+function openSubcategoriaModal(oldName = '') {
+    inputSubcategoriaOldName.value = oldName;
+    inputSubcategoriaName.value = oldName;
+    document.getElementById('subcategoria-modal-title').textContent = oldName ? "Editar División" : "Nueva División";
+    document.getElementById('btn-delete-subcategoria').style.display = oldName ? "inline-flex" : "none";
+    subcategoriaModal.classList.add('show');
+}
+
+document.getElementById('close-subcategoria-modal')?.addEventListener('click', () => subcategoriaModal.classList.remove('show'));
+document.getElementById('cancel-subcategoria-modal')?.addEventListener('click', () => subcategoriaModal.classList.remove('show'));
+
+document.getElementById('save-subcategoria-modal')?.addEventListener('click', async () => {
+    const newName = inputSubcategoriaName.value.trim().toUpperCase();
+    const oldName = inputSubcategoriaOldName.value;
+    if (!newName) return;
+
+    if (activeConjuntoId === 'local-preview') {
+        // Renombrar en memoria local
+        if (oldName) {
+            // Edit
+            const subObj = allSubcategorias.find(s => s.name === oldName);
+            if (subObj) subObj.name = newName;
+            
+            allMessages.forEach(m => {
+                if (m.subCategory === oldName) m.subCategory = newName;
+            });
+        } else {
+            // Create
+            allSubcategorias.push({
+                id: 'mock_sub_' + Date.now(),
+                categoria_id: activeCategoryId,
+                name: newName
+            });
+        }
+    } else {
+        // PRODUCCIÓN (Supabase)
+        if (oldName) {
+            // Edit en BD
+            const subObj = allSubcategorias.find(s => s.name === oldName && s.categoria_id === activeCategoryId);
+            if (subObj) {
+                subObj.name = newName;
+                supabase.from('subcategorias').update({ name: newName }).eq('id', subObj.id).then();
+            }
+            allMessages.forEach(m => {
+                if (m.subCategory === oldName) m.subCategory = newName;
+            });
+        } else {
+            // Create en BD
+            supabase.from('subcategorias').insert([{ categoria_id: activeCategoryId, name: newName }]).select().then(({data}) => {
+                if (data && data[0]) {
+                    allSubcategorias.push(data[0]);
+                    renderMessages(); // re-render para mostrarla
+                }
+            });
+        }
+    }
+    subcategoriaModal.classList.remove('show');
+    renderMessages();
+    showToast("División guardada");
+});
+
+// --- NOTIFICACIÓN TOAST ---
+const toastEl = document.getElementById('toast');
+const toastMsgEl = document.getElementById('toast-message');
+let toastTimeout;
+
+function showToast(message = "¡Acción realizada con éxito!") {
+    clearTimeout(toastTimeout);
+    if (toastMsgEl) toastMsgEl.textContent = message;
+    if (toastEl) {
+        toastEl.classList.add('show');
+        toastTimeout = setTimeout(() => {
+            toastEl.classList.remove('show');
+        }, 3000);
+    }
+}
+
+// --- DRAG AND DROP (EVENT DELEGATION) ---
+let draggedMessageId = null;
+
+document.body.addEventListener('dragstart', (e) => {
+    const card = e.target.closest('.square-card');
+    if (card) {
+        document.body.classList.add('is-dragging');
+        draggedMessageId = card.getAttribute('data-id');
+        e.dataTransfer.setData('text/plain', draggedMessageId);
+        card.classList.add('dragging');
+        
+        // Highlight active category items on sidebar and empty division placeholders in grid
+        document.querySelectorAll('.category-nav-item, .subcategory-nav-item, .empty-division-placeholder').forEach(el => {
+            el.classList.add('drag-ready');
+        });
+    }
+});
+
+document.body.addEventListener('dragend', (e) => {
+    document.body.classList.remove('is-dragging');
+    const card = e.target.closest('.square-card');
+    if (card) {
+        card.classList.remove('dragging');
+    }
+    document.querySelectorAll('.category-nav-item, .subcategory-nav-item, .square-card, .empty-division-placeholder').forEach(el => {
+        el.classList.remove('drag-ready', 'drag-hover');
+    });
+});
+
+document.body.addEventListener('dragover', (e) => {
+    e.preventDefault(); // Always allow drop to prevent snap-back delay
+    const categoryTarget = e.target.closest('.category-nav-item, .subcategory-nav-item');
+    const cardTarget = e.target.closest('.square-card');
+    const emptyPlaceholderTarget = e.target.closest('.empty-division-placeholder');
+    
+    if (categoryTarget || (cardTarget && cardTarget.getAttribute('data-id') !== draggedMessageId) || emptyPlaceholderTarget) {
+        if (categoryTarget) {
+            categoryTarget.classList.add('drag-hover');
+        }
+        if (cardTarget) {
+            cardTarget.classList.add('drag-hover');
+        }
+        if (emptyPlaceholderTarget) {
+            emptyPlaceholderTarget.classList.add('drag-hover');
+        }
+    }
+});
+
+document.body.addEventListener('dragleave', (e) => {
+    const target = e.target.closest('.category-nav-item, .subcategory-nav-item, .square-card, .empty-division-placeholder');
+    if (target) {
+        target.classList.remove('drag-hover');
+    }
+});
+
+document.body.addEventListener('drop', async (e) => {
+    e.preventDefault();
+    document.body.classList.remove('is-dragging');
+    const categoryTarget = e.target.closest('.category-nav-item');
+    const subcategoryTarget = e.target.closest('.subcategory-nav-item');
+    const cardTarget = e.target.closest('.square-card');
+    const emptyPlaceholderTarget = e.target.closest('.empty-division-placeholder');
+    
+    if (!draggedMessageId) return;
+    
+    // Case 1: Drop on category
+    if (categoryTarget) {
+        const newCatId = categoryTarget.getAttribute('data-id');
+        if (newCatId === 'all' || newCatId === 'trash') return;
+        await moveMessageToCategory(draggedMessageId, newCatId, null);
+    }
+    // Case 2: Drop on subcategory (division) in sidebar
+    else if (subcategoryTarget) {
+        const subName = subcategoryTarget.getAttribute('data-name');
+        const subObj = allSubcategorias.find(s => s.name === subName);
+        if (subObj) {
+            await moveMessageToCategory(draggedMessageId, subObj.categoria_id, subName);
+        }
+    }
+    // Case 3: Drop on empty division placeholder in the grid
+    else if (emptyPlaceholderTarget) {
+        const subName = emptyPlaceholderTarget.getAttribute('data-division');
+        if (activeCategoryId && activeCategoryId !== 'all' && activeCategoryId !== 'trash') {
+            await moveMessageToCategory(draggedMessageId, activeCategoryId, subName);
+        }
+    }
+    // Case 4: Drop on card (reorder)
+    else if (cardTarget) {
+        const targetId = cardTarget.getAttribute('data-id');
+        if (targetId && targetId !== draggedMessageId) {
+            await swapMessagesOrder(draggedMessageId, targetId);
+        }
+    }
+});
+
+async function moveMessageToCategory(messageId, catId, subCatName) {
+    const finalSubCat = subCatName === 'General' ? null : subCatName;
+    const msg = allMessages.find(m => String(m.id) === String(messageId));
+    
+    if (msg) {
+        // Actualización optimista de la UI
+        msg.categoria_id = catId;
+        msg.sub_categoria = finalSubCat;
+        renderMessages();
+        renderCategories();
+        
+        // Petición asíncrona en segundo plano
+        const { error } = await supabase.from('mensajes').update({
+            categoria_id: catId,
+            sub_categoria: finalSubCat
+        }).eq('id', messageId);
+        
+        if (error) {
+            alert("Error al mover mensaje: " + error.message);
+            await loadDataForConjunto(activeConjuntoId); // Revertir en caso de error
+        } else {
+            showToast("Mensaje movido con éxito");
+        }
+    }
+}
+
+async function swapMessagesOrder(msgId1, msgId2) {
+    const msg1 = allMessages.find(m => String(m.id) === String(msgId1));
+    const msg2 = allMessages.find(m => String(m.id) === String(msgId2));
+    
+    if (!msg1 || !msg2) return;
+    
+    const div1 = msg1.sub_categoria || msg1.subCategory || null;
+    const div2 = msg2.sub_categoria || msg2.subCategory || null;
+    const sameDivision = div1 === div2;
+    
+    const tempCreatedAt = msg1.created_at;
+    const tempCreatedAt2 = msg2.created_at;
+    
+    // Actualización optimista
+    msg1.created_at = tempCreatedAt2;
+    msg2.created_at = tempCreatedAt;
+    if (!sameDivision) {
+        msg1.sub_categoria = div2;
+    }
+    
+    const idx1 = allMessages.indexOf(msg1);
+    const idx2 = allMessages.indexOf(msg2);
+    if (idx1 !== -1 && idx2 !== -1) {
+        allMessages[idx1] = msg2;
+        allMessages[idx2] = msg1;
+    }
+    renderMessages();
+    
+    // Guardar en segundo plano
+    const updateData = { created_at: tempCreatedAt2 };
+    if (!sameDivision) {
+        updateData.sub_categoria = div2;
+    }
+    
+    const { error } = await supabase.from('mensajes').update(updateData).eq('id', msg1.id);
+    const { error: error2 } = await supabase.from('mensajes').update({ created_at: tempCreatedAt }).eq('id', msg2.id);
+    
+    if (error || error2) {
+        alert("Error al reordenar: " + (error?.message || error2?.message));
+        await loadDataForConjunto(activeConjuntoId);
+    } else {
+        showToast(sameDivision ? "Mensajes reordenados" : "Mensaje movido de división");
+    }
+}

@@ -17,7 +17,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- App Styles -->
-    <link rel="stylesheet" href="style.css?v=9">
+    <link rel="stylesheet" href="style.css?v=11">
     <link rel="stylesheet" href="dark-theme.css?v=1">
 </head>
 
@@ -103,7 +103,7 @@
                         <!-- Selector de Conjuntos -->
                         <div class="conjuntos-wrapper" style="margin-bottom: 24px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <h3 style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin: 0;">Conjunto Activo</h3>
+                                <h3 style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin: 0;">Conjunto Activo</h3>
                                 <div style="display: flex; gap: 4px;">
                                     <button id="btn-edit-conjunto" class="icon-btn" style="width:24px; height:24px;" title="Editar Conjunto">
                                         <i data-lucide="edit-2" style="width:14px; height:14px;"></i>
@@ -141,7 +141,7 @@
                     <!-- Panel Central: Grid de Tarjetas Cuadradas -->
                     <div class="workspace-main">
                         <div class="main-title-bar">
-                            <h2 id="main-panel-title">Todos los Mensajes</h2>
+                            <h2 id="main-panel-title"></h2>
                         </div>
                         <div id="messages-grid">
                             <!-- Generado por JS -->
@@ -289,14 +289,20 @@
                     <label>Título del mensaje</label>
                     <input type="text" id="edit-title" class="form-control">
                 </div>
-                <div class="form-group">
-                    <label>Categoría</label>
-                    <select id="edit-category" class="form-control">
-                        <option value="INFORMACIÓN">INFORMACIÓN</option>
-                        <option value="SALUDOS">SALUDOS</option>
-                        <option value="CIERRES">CIERRES</option>
-                        <option value="SEGUIMIENTO">SEGUIMIENTO</option>
-                    </select>
+                <div class="form-group" style="display:flex; gap: 16px;">
+                    <div style="flex:1;">
+                        <label>Categoría</label>
+                        <select id="edit-category" class="form-control">
+                            <!-- dinámico -->
+                        </select>
+                    </div>
+                    <div style="flex:1;">
+                        <label>División (Opcional)</label>
+                        <select id="edit-subcategory" class="form-control">
+                            <option value="">General (Sin división)</option>
+                            <!-- dinámico -->
+                        </select>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Texto del mensaje</label>
@@ -349,6 +355,31 @@
                 <div style="display: flex; gap: 8px; margin-left: auto;">
                     <button class="btn-cancel" id="cancel-conjunto-modal">Cancelar</button>
                     <button class="btn-primary" id="save-conjunto-modal">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- Subcategoría Modal -->
+    <div id="subcategoria-modal" class="modal-backdrop">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="subcategoria-modal-title">Nueva División</h2>
+                <button class="icon-btn" id="close-subcategoria-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-subcategoria-old-name">
+                <div class="form-group">
+                    <label>Nombre de la división interna</label>
+                    <input type="text" id="new-subcategoria-name" class="form-control" placeholder="Ej: CURSOS DOBLES">
+                </div>
+            </div>
+            <div class="modal-footer" style="display:flex; justify-content:space-between; width:100%;">
+                <button class="icon-action-btn" id="btn-delete-subcategoria" style="color:var(--danger); display:none;" title="Eliminar división"><i data-lucide="trash-2"></i></button>
+                <div style="display:flex; gap:8px; margin-left:auto;">
+                    <button class="btn-cancel" id="cancel-subcategoria-modal">Cancelar</button>
+                    <button class="btn-primary" id="save-subcategoria-modal">Guardar</button>
                 </div>
             </div>
         </div>
@@ -513,7 +544,7 @@
     </div>
 
     <!-- App Logic -->
-    <script type="module" src="src/app-supabase.js?v=29"></script>
+    <script type="module" src="src/app-supabase.js?v=31"></script>
     <script type="module" src="theme.js?v=1"></script>
 </body>
 
