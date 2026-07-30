@@ -1277,47 +1277,126 @@ document.getElementById('btn-finish-tutorial')?.addEventListener('click', () => 
     document.getElementById('tutorial-modal').classList.remove('show');
 });
 
+function startTour() {
+    if (!window.driver || !window.driver.js) {
+        console.error("Driver.js no está cargado correctamente");
+        return;
+    }
+    
+    // Inyectar mensajes falsos si la pantalla está vacía para que el tutorial funcione y se vea como un grid real
+    const grid = document.getElementById('messages-grid');
+    const hasMessages = grid && grid.querySelectorAll('.square-card').length > 0;
+    let dummyElements = [];
+    
+    if (!hasMessages && grid) {
+        const dummyData = [
+            {
+                title: "Modalidad Presencialidad Remota",
+                icon: "info",
+                excerpt: "📚✨ Modalidad Presencialidad Remota 💻🌍 Estudiá de forma flexible y conectate con tus docentes en tiempo real desde cualquier lugar."
+            },
+            {
+                title: "Carreras Disponibles (Ingenierías)",
+                icon: "graduation-cap",
+                excerpt: "¡Hola! 😊 Actualmente en la universidad contamos con las carreras de Ingeniería Civil e Ingeniería Industrial."
+            },
+            {
+                title: "Aclaración sobre CIDEP",
+                icon: "help-circle",
+                excerpt: "Hola! Muchas gracias por tu interés. Te comento que nuestra universidad no ofrece carreras técnicas, cursos libres ni diplomados directamente."
+            }
+        ];
+
+        // Clear the "No hay mensajes" text if it's there
+        if (grid.innerHTML.includes('No hay mensajes')) {
+            grid.innerHTML = '';
+        }
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+
+        dummyData.forEach((data, index) => {
+            let dummyMsg = document.createElement('div');
+            dummyMsg.className = 'square-card';
+            dummyMsg.id = 'dummy-tour-msg-' + index;
+            dummyMsg.style.cssText = 'position: relative; z-index: 10000; background-color: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid var(--border-color); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 12px; width: 100%;';
+            dummyMsg.innerHTML = `
+                <div class="square-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="square-card-icon bg-blue-light" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 10px; background-color: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+                        <i data-lucide="${data.icon}" style="width: 20px; height: 20px;"></i>
+                    </div>
+                    <div class="icon-actions" style="display: flex; gap: 4px;">
+                        <button class="icon-action-btn" title="Copiar al portapapeles"><i data-lucide="copy" style="width: 16px; height: 16px;"></i></button>
+                        <button class="icon-action-btn" title="Anclar mensaje"><i data-lucide="pin" style="width: 16px; height: 16px;"></i></button>
+                        <button class="icon-action-btn" title="Editar mensaje"><i data-lucide="edit-2" style="width: 16px; height: 16px;"></i></button>
+                    </div>
+                </div>
+                <h3 class="square-card-title" style="margin: 0; font-size: 1.05rem; font-weight: 600; color: var(--text-main);">${data.title}</h3>
+                <p class="square-card-excerpt" style="margin: 0; font-size: 0.9rem; color: var(--text-muted); line-height: 1.5;">${data.excerpt}</p>
+            `;
+            grid.appendChild(dummyMsg);
+            dummyElements.push(dummyMsg);
+        });
+        
+        lucide.createIcons();
+    }
+
+    const driver = window.driver.js.driver;
+    const driverObj = driver({
+        showProgress: true,
+        animate: true,
+        popoverClass: 'gach-driver-theme',
+        nextBtnText: 'Siguiente',
+        prevBtnText: 'Anterior',
+        doneBtnText: '¡Entendido!',
+        allowClose: true,
+        showButtons: ['next', 'previous', 'close'],
+        onDestroyed: () => {
+            dummyElements.forEach(el => {
+                if (el && el.parentNode) {
+                    el.parentNode.removeChild(el);
+                }
+            });
+        },
+        steps: [
+            { popover: { title: '¡Bienvenido a GACH!', description: 'Vamos a darte un rápido recorrido por tu nueva herramienta de respuestas.' } },
+            { element: '#conjuntos-select', popover: { title: 'Espacios de Trabajo', description: 'Aquí puedes cambiar entre diferentes guías o departamentos.' } },
+            { element: '.search-container', popover: { title: 'Buscador Inteligente', description: '¿Buscas algo específico? Escribe palabras clave y encontraremos las respuestas al instante en toda tu base de datos.' } },
+            { element: '#directory-categories', popover: { title: 'Categorías', description: 'Navega entre los distintos temas para encontrar respuestas rápidas.' } },
+            { element: '#messages-grid', popover: { title: 'Tus Mensajes', description: 'Aquí están tus respuestas. ¡Puedes arrastrarlas y soltarlas para organizarlas a tu gusto entre divisiones!' } },
+            { element: hasMessages ? '.square-card .icon-actions' : '#dummy-tour-msg-0 .icon-actions', popover: { title: 'Acciones Rápidas', description: 'Aquí tienes tus botones. El más importante es "Copiar", que envía todo el texto directo a tu portapapeles listo para enviar al cliente. También puedes anclarlo o editarlo.' } },
+            { element: '.workspace-rightbar', popover: { title: 'Accesos Rápidos', description: 'En este panel de la derecha siempre tendrás a la mano tus mensajes Anclados (los más importantes) y tu historial reciente de copias para mayor velocidad.' } }
+        ]
+    });
+    driverObj.drive();
+}
+
 function checkFirstLogin() {
     if (!currentUser) return;
     
-    const hasSeenTutorial = localStorage.getItem('tutorial_seen_' + currentUser.id);
+    // For testing purposes, we ALWAYS show the tour right now, 
+    // just for this session, as requested by the user.
+    // In production, uncomment the check:
+    // const hasSeenTutorial = localStorage.getItem('tutorial_seen_' + currentUser.id);
+    // if (!hasSeenTutorial) {
     
-    // Add notification item
-    if (notificationsList) {
-        const notifItem = document.createElement('div');
-        notifItem.style.cssText = 'padding: 16px; border-bottom: 1px solid var(--border-color); display: flex; gap: 12px; cursor: pointer; transition: background-color var(--transition-fast);';
-        notifItem.innerHTML = `
-            <div style="background-color: rgba(0, 82, 255, 0.1); color: var(--primary-color); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                <i data-lucide="compass" style="width: 16px; height: 16px;"></i>
-            </div>
-            <div>
-                <h4 style="margin: 0 0 4px 0; font-size: 0.9rem; font-weight: 600; color: var(--text-main);">Bienvenido a GACH</h4>
-                <p style="margin: 0; font-size: 0.8rem; color: var(--text-muted);">Haz clic aquí para ver un pequeño tutorial de cómo usar la aplicación.</p>
-            </div>
-        `;
-        notifItem.addEventListener('click', () => {
-            showTutorial();
-            notificationsDropdown.style.display = 'none';
-        });
-        
-        notificationsList.innerHTML = '';
-        notificationsList.appendChild(notifItem);
-    }
-
-    if (!hasSeenTutorial) {
-        // Show tutorial modal automatically
-        setTimeout(() => {
-            showTutorial();
-            localStorage.setItem('tutorial_seen_' + currentUser.id, 'true');
-        }, 500);
-
-        // Show dot
-        const hasReadNotifs = localStorage.getItem('notifications_read_' + currentUser.id);
-        if (!hasReadNotifs && notificationDot) {
-            notificationDot.style.display = 'block';
-        }
-    }
+    setTimeout(() => {
+        startTour();
+        localStorage.setItem('tutorial_seen_' + currentUser.id, 'true');
+    }, 800);
+    
+    // }
 }
+
+document.getElementById('btn-replay-tutorial')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('profile-dropdown').style.display = 'none';
+    startTour();
+});
+
+document.getElementById('header-tutorial-btn')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    startTour();
+});
 
 // INICIO
 async function initApp() {

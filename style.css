@@ -1169,3 +1169,104 @@ body {
 body.is-dragging .phantom-dropzone {
     display: flex !important;
 }
+
+/* Driver.js Custom overrides to match GACH app */
+.driver-popover {
+    border-radius: var(--radius-md) !important;
+    font-family: 'Inter', sans-serif !important;
+    padding: 20px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.driver-popover-title {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: var(--text-main) !important;
+    margin-bottom: 8px !important;
+}
+.driver-popover-description {
+    font-size: 0.9rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1.5 !important;
+}
+.driver-popover-footer button {
+    border-radius: var(--radius-sm) !important;
+    font-weight: 500 !important;
+    font-family: 'Inter', sans-serif !important;
+    padding: 6px 12px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    text-shadow: none !important;
+}
+.driver-popover-next-btn, .driver-popover-done-btn {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+}
+.driver-popover-next-btn:hover, .driver-popover-done-btn:hover {
+    background-color: var(--primary-dark) !important;
+}
+.driver-popover-prev-btn {
+    background-color: transparent !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.driver-popover-prev-btn:hover {
+    color: var(--text-main) !important;
+    background-color: var(--bg-color) !important;
+}
+.driver-popover-progress-text {
+    font-size: 0.8rem !important;
+    color: var(--text-muted) !important;
+}
+
+/* Driver.js Custom overrides to match GACH app */
+.gach-driver-theme {
+    border-radius: var(--radius-md) !important;
+    font-family: 'Inter', sans-serif !important;
+    padding: 20px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.gach-driver-theme .driver-popover-title {
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: var(--text-main) !important;
+    margin-bottom: 8px !important;
+}
+.gach-driver-theme .driver-popover-description {
+    font-size: 0.9rem !important;
+    color: var(--text-muted) !important;
+    line-height: 1.5 !important;
+}
+.gach-driver-theme .driver-popover-footer button {
+    border-radius: var(--radius-sm) !important;
+    font-weight: 500 !important;
+    font-family: 'Inter', sans-serif !important;
+    padding: 6px 12px !important;
+    cursor: pointer !important;
+    transition: all 0.2s !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+.gach-driver-theme .driver-popover-navigation-btns button:last-child {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+}
+.gach-driver-theme .driver-popover-navigation-btns button:last-child:hover {
+    background-color: var(--primary-dark) !important;
+}
+.gach-driver-theme .driver-popover-navigation-btns button:first-child:not(:last-child) {
+    background-color: transparent !important;
+    color: var(--text-muted) !important;
+    border: 1px solid var(--border-color) !important;
+}
+.gach-driver-theme .driver-popover-navigation-btns button:first-child:not(:last-child):hover {
+    color: var(--text-main) !important;
+    background-color: var(--bg-color) !important;
+}
+.gach-driver-theme .driver-popover-progress-text {
+    font-size: 0.8rem !important;
+    color: var(--text-muted) !important;
+}
