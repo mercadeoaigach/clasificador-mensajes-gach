@@ -690,6 +690,16 @@ function renderMessages() {
                 `;
             }
 
+            let internalNoteHtml = '';
+            if (msg.internal_note) {
+                internalNoteHtml = `
+                    <div class="internal-note-badge" title="Este mensaje contiene una nota interna">
+                        <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
+                        Nota Interna
+                    </div>
+                `;
+            }
+
             return `
                 <div class="square-card ${isTrash ? 'trash-card' : ''}" style="${isTrash ? 'border-color: rgba(239, 68, 68, 0.3); opacity: 0.85;' : ''}">
                     <div class="square-card-header">
@@ -701,6 +711,7 @@ function renderMessages() {
                         </div>
                     </div>
                     <h3 class="square-card-title" title="${msg.title}">${msg.title}</h3>
+                    ${internalNoteHtml}
                     <p class="square-card-excerpt" data-id="${msg.id}" title="Clic para expandir">${msg.excerpt}</p>
                 </div>
             `;
@@ -931,6 +942,21 @@ function openReadingModal(id) {
     currentReadingId = id;
     readingTitle.textContent = msg.title;
     readingContent.textContent = msg.excerpt;
+    
+    const internalNoteEl = document.getElementById('reading-modal-internal-note');
+    if (msg.internal_note) {
+        internalNoteEl.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-weight: 600;">
+                <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+                Nota Interna
+            </div>
+            ${msg.internal_note}
+        `;
+        internalNoteEl.style.display = 'block';
+    } else {
+        internalNoteEl.style.display = 'none';
+        internalNoteEl.innerHTML = '';
+    }
     
     // UI states of action buttons
     const pinBtn = document.getElementById('reading-btn-pin');
