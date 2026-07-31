@@ -162,6 +162,9 @@
                                 <a href="#" id="btn-replay-tutorial" class="dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-decoration: none; color: var(--text-main); font-weight: 500; font-size: 0.95rem; border-radius: var(--radius-sm); transition: background-color var(--transition-fast);">
                                     <i data-lucide="map" style="width: 18px; height: 18px;"></i> Ver Tutorial
                                 </a>
+                                <a href="#" id="btn-export-backup" class="dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-decoration: none; color: var(--text-main); font-weight: 500; font-size: 0.95rem; border-radius: var(--radius-sm); transition: background-color var(--transition-fast);">
+                                    <i data-lucide="download" style="width: 18px; height: 18px;"></i> Descargar Respaldo Total
+                                </a>
                                 <div style="height: 1px; background-color: var(--border-color); margin: 6px 0;"></div>
                                 <a href="#" id="logout-btn" class="dropdown-item" style="display: flex; align-items: center; gap: 12px; padding: 10px 16px; text-decoration: none; color: var(--danger); font-weight: 500; font-size: 0.95rem; border-radius: var(--radius-sm); transition: background-color var(--transition-fast);">
                                     <i data-lucide="log-out" style="width: 18px; height: 18px;"></i> Cerrar Sesión
@@ -194,6 +197,7 @@
                             <select id="conjuntos-select" class="form-control" style="width: 100%; font-weight: 600; cursor: pointer;">
                                 <option value="">Cargando conjuntos...</option>
                             </select>
+                            <div id="conjunto-update-date" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px; text-align: right; display: none;"></div>
                         </div>
 
                         <div class="sidebar-title"
@@ -335,12 +339,8 @@
                             Exporta tu base de datos actual para tener un respaldo o compártela con un compañero de equipo.
                         </p>
                         <div style="display:flex; flex-direction: column; gap:16px;">
-                            <button class="btn-primary" style="background-color: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); width: fit-content;">
+                            <button id="btn-export-settings" class="btn-primary" style="background-color: var(--card-bg); color: var(--text-main); border: 1px solid var(--border-color); width: fit-content;">
                                 <i data-lucide="download"></i> Exportar Respaldo
-                            </button>
-                            <button class="btn-primary" style="width: fit-content;">
-                                <i data-lucide="upload"></i> Importar Datos
-                            </button>
                         </div>
                     </div>
                 </div>

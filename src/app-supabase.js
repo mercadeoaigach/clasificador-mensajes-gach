@@ -196,6 +196,18 @@ async function loadConjuntos() {
 async function loadDataForConjunto(conjuntoId) {
     if (!conjuntoId) return;
 
+    // Actualizar UI de fecha
+    const dateEl = document.getElementById('conjunto-update-date');
+    const conjunto = allConjuntos.find(c => c.id == conjuntoId);
+    if (dateEl && conjunto && conjunto.created_at) {
+        const date = new Date(conjunto.created_at);
+        const dateStr = date.toLocaleDateString('es-ES', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        dateEl.textContent = `Act. ${dateStr}`;
+        dateEl.style.display = 'block';
+    } else if (dateEl) {
+        dateEl.style.display = 'none';
+    }
+
     // Restaurar perfil original si salimos de la vista previa
     if (typeof loadUserProfile === 'function') {
         loadUserProfile();
@@ -1720,3 +1732,55 @@ async function swapMessagesOrder(msgId1, msgId2) {
         showToast(sameDivision ? "Mensajes reordenados" : "Mensaje movido de división");
     }
 }
+
+// --- LÓGICA DE EXPORTACIÓN (RESPALDO) ---
+async function handleExportBackup(e) {
+    const btn = e.currentTarget;
+    try {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="loader" class="spin" style="width: 14px; height: 14px;"></i> Exportando...';
+        
+        // Cargar todo directamente de Supabase (todas las tablas asociadas a este usuario)
+        const { data: conjuntos, error: errConj } = await supabase.from('conjuntos').select('*');
+        if (errConj) throw errConj;
+        
+        const { data: categorias, error: errCat } = await supabase.from('categorias').select('*');
+        if (errCat) throw errCat;
+        
+        const { data: subcategorias, error: errSub } = await supabase.from('subcategorias').select('*');
+        if (errSub) throw errSub;
+        
+        const { data: mensajes, error: errMsj } = await supabase.from('mensajes').select('*');
+        if (errMsj) throw errMsj;
+        
+        const backupData = {
+            export_date: new Date().toISOString(),
+            user: currentUser?.email,
+            conjuntos,
+            categorias,
+            subcategorias,
+            mensajes
+        };
+        
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `uin_respaldo_total_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        btn.innerHTML = originalText;
+        if(window.lucide) lucide.createIcons();
+    } catch (error) {
+        console.error("Error al exportar:", error);
+        alert("Ocurrió un error al generar el respaldo: " + error.message);
+        btn.innerHTML = '<i data-lucide="download" style="width: 14px; height: 14px;"></i> Exportar Respaldo';
+        if(window.lucide) lucide.createIcons();
+    }
+}
+
+document.getElementById('btn-export-backup')?.addEventListener('click', handleExportBackup);
+document.getElementById('btn-export-settings')?.addEventListener('click', handleExportBackup);
