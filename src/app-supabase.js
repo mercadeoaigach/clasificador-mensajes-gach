@@ -497,7 +497,7 @@ function renderMessages() {
                     ${msg.internal_note ? `
                     <div class="internal-note-badge" title="Este mensaje contiene una nota interna">
                         <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
-                        Nota Interna
+                        Nota
                     </div>
                     ` : ''}
                     <p class="square-card-excerpt" data-id="${msg.id}" title="Clic para expandir" style="cursor: pointer;">${msg.excerpt}</p>
@@ -865,7 +865,7 @@ function openReadingModal(id) {
             internalNoteEl.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-weight: 600;">
                     <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
-                    Nota Interna
+                    Nota
                 </div>
                 ${msg.internal_note}
             `;

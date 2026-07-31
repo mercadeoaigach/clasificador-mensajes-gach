@@ -695,7 +695,7 @@ function renderMessages() {
                 internalNoteHtml = `
                     <div class="internal-note-badge" title="Este mensaje contiene una nota interna">
                         <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
-                        Nota Interna
+                        Nota
                     </div>
                 `;
             }

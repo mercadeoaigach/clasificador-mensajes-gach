@@ -631,6 +631,7 @@ body {
     padding: 2px 6px;
     border-radius: 12px;
     margin-bottom: 8px;
+    width: fit-content;
     margin-top: 4px;
 }
 
