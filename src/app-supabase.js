@@ -931,6 +931,44 @@ document.getElementById('reading-btn-pin')?.addEventListener('click', async () =
     }
 });
 
+document.getElementById('reading-btn-edit')?.addEventListener('click', () => {
+    const msg = allMessages.find(m => String(m.id) === String(currentReadingId));
+    if (msg) {
+        document.getElementById('reading-modal').classList.remove('show');
+        
+        document.getElementById('edit-id').value = msg.id;
+        document.getElementById('edit-title').value = msg.title;
+        document.getElementById('edit-excerpt').value = msg.excerpt;
+        
+        const catId = msg.categoria_id || msg.categoryId;
+        document.getElementById('edit-category').innerHTML = workspaceCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        document.getElementById('edit-category').value = catId;
+        
+        // Subcategorias
+        const selectSub = document.getElementById('edit-subcategory');
+        const subs = allSubcategorias.filter(s => s.categoria_id === catId).map(s => s.name);
+        selectSub.innerHTML = '<option value="">General (Sin división)</option>' + subs.map(s => `<option value="${s}">${s}</option>`).join('');
+        selectSub.value = msg.sub_categoria || msg.subCategory || '';
+        
+        document.getElementById('edit-category').onchange = (e) => {
+            const newCatId = e.target.value;
+            const newSubs = allSubcategorias.filter(s => s.categoria_id === newCatId).map(s => s.name);
+            selectSub.innerHTML = '<option value="">General (Sin división)</option>' + newSubs.map(s => `<option value="${s}">${s}</option>`).join('');
+        };
+        
+        initialMessageState = { title: msg.title, excerpt: msg.excerpt }; // Guardar estado
+        document.getElementById('edit-modal').classList.add('show');
+    }
+});
+
+document.getElementById('reading-btn-delete')?.addEventListener('click', () => {
+    if (currentReadingId) {
+        document.getElementById('reading-modal').classList.remove('show');
+        messageToDeleteId = currentReadingId;
+        document.getElementById('delete-modal').classList.add('show');
+    }
+});
+
 // Modales UI genéricos
 const profileTrigger = document.getElementById('profile-trigger');
 const profileDropdown = document.getElementById('profile-dropdown');
