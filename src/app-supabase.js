@@ -939,6 +939,7 @@ document.getElementById('reading-btn-edit')?.addEventListener('click', () => {
         document.getElementById('edit-id').value = msg.id;
         document.getElementById('edit-title').value = msg.title;
         document.getElementById('edit-excerpt').value = msg.excerpt;
+        document.getElementById('edit-internal-note').value = msg.internal_note || '';
         
         const catId = msg.categoria_id || msg.categoryId;
         document.getElementById('edit-category').innerHTML = workspaceCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
@@ -1084,6 +1085,7 @@ btnNewMessage.addEventListener('click', () => {
     if (workspaceCategories.length === 0) return alert("Crea una categoría primero");
     inputMessageTitle.value = '';
     inputMessageExcerpt.value = '';
+    document.getElementById('edit-internal-note').value = '';
     inputMessageCategory.innerHTML = workspaceCategories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
     if (activeCategoryId !== 'all') inputMessageCategory.value = activeCategoryId;
     
@@ -1098,6 +1100,7 @@ document.getElementById('save-message-modal').addEventListener('click', async ()
     const id = document.getElementById('edit-id').value;
     const title = inputMessageTitle.value.trim();
     const excerpt = inputMessageExcerpt.value.trim();
+    const internalNote = document.getElementById('edit-internal-note').value.trim();
     const catId = inputMessageCategory.value;
     const subCat = document.getElementById('edit-subcategory').value || null;
     
@@ -1111,6 +1114,7 @@ document.getElementById('save-message-modal').addEventListener('click', async ()
             if (m) {
                 m.title = title;
                 m.excerpt = excerpt;
+                m.internal_note = internalNote;
                 m.categoria_id = catId;
                 m.categoryId = catId;
                 m.sub_categoria = subCat;
@@ -1121,6 +1125,7 @@ document.getElementById('save-message-modal').addEventListener('click', async ()
                 id: 'mock_msg_' + Date.now(),
                 title: title,
                 excerpt: excerpt,
+                internal_note: internalNote,
                 categoria_id: catId,
                 categoryId: catId,
                 sub_categoria: subCat,
@@ -1140,6 +1145,7 @@ document.getElementById('save-message-modal').addEventListener('click', async ()
                 categoria_id: catId,
                 title: title,
                 excerpt: excerpt,
+                internal_note: internalNote,
                 sub_categoria: subCat
             }).eq('id', id);
             error = updateError;
@@ -1149,6 +1155,7 @@ document.getElementById('save-message-modal').addEventListener('click', async ()
                 categoria_id: catId,
                 title: title,
                 excerpt: excerpt,
+                internal_note: internalNote,
                 sub_categoria: subCat
             }]);
             error = insertError;
