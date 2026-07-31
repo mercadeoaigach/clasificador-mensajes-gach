@@ -492,7 +492,7 @@ Además, te recuerdo que el proceso de matrícula lo podemos hacer por este medi
 
 📧 Sede de San Carlos: reportedepago@uin.cr
 
-Debés indicar tu nombre completo, número de ID y el trámite por el cual se realiza el pago.', false, NULL);
+Debés indicar tu nombre completo, número de ID y el trámite por el cual se realiza el pago.', false, 'Indicar siempre al estudiante que debe incluir nombre completo, número de identificación y trámite por el cual se realiza el pago.');
 
   SELECT id INTO cat_id FROM public.categorias WHERE conjunto_id = new_conjunto_id AND name = 'Proceso de matrícula y trámites';
   INSERT INTO public.mensajes (categoria_id, sub_categoria, title, excerpt, is_pinned, internal_note) VALUES
@@ -537,7 +537,7 @@ Con esa información, la coordinadora de carrera revisará tu caso y nos indicar
 • Plan de estudio, sellado y firmado.
 
 Si gustás, puedo ayudarte desde ya a iniciar el preestudio y orientarte paso a paso durante el proceso.
-¿Te gustaría enviarme los documentos para comenzar? 💙🚀', false, NULL);
+¿Te gustaría enviarme los documentos para comenzar? 💙🚀', false, 'Los requisitos formales se solicitan solo cuando el estudiante decida avanzar (con o sin preestudio previo).');
 
   SELECT id INTO cat_id FROM public.categorias WHERE conjunto_id = new_conjunto_id AND name = 'Proceso de matrícula y trámites';
   INSERT INTO public.mensajes (categoria_id, sub_categoria, title, excerpt, is_pinned, internal_note) VALUES
@@ -567,7 +567,7 @@ El TCU tiene un costo administrativo de: ₡30 640,95 con IVA incluido.', false,
 
 ⚠️ Si deseás ingresar a la Licenciatura, primero debés cancelar los derechos de graduación de Bachillerato, tanto para Ingeniería Civil como para Ingeniería Industrial.
 
-📨 Para iniciar el trámite, debés enviar un correo electrónico al departamento de Registro de la sede correspondiente 🏫. Ellos verificarán que cumplás con todos los requisitos y te indicarán los pasos a seguir para el depósito del dinero y los demás trámites 🧾✅.', false, NULL);
+📨 Para iniciar el trámite, debés enviar un correo electrónico al departamento de Registro de la sede correspondiente 🏫. Ellos verificarán que cumplás con todos los requisitos y te indicarán los pasos a seguir para el depósito del dinero y los demás trámites 🧾✅.', false, 'Verificar en Acamsys que el plan de estudios esté "concluido" o "concluyendo" antes de indicar este trámite. Si el estudiante desea ingresar a la Licenciatura, debe cancelar primero los derechos de graduación de Bachillerato (Ingeniería Civil o Industrial).');
 
   SELECT id INTO cat_id FROM public.categorias WHERE conjunto_id = new_conjunto_id AND name = 'Correos del proceso de matrícula';
   INSERT INTO public.mensajes (categoria_id, sub_categoria, title, excerpt, is_pinned, internal_note) VALUES
