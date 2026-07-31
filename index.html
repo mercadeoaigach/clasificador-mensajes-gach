@@ -573,6 +573,14 @@
             <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
                 <h2 id="reading-modal-title" style="font-size: 1.25rem;">Vista Completa</h2>
                 <div style="display:flex; align-items:center; gap:8px;">
+                    <div style="display:flex; gap:6px; margin-right: 8px;">
+                        <button class="icon-action-btn" id="reading-btn-pin" title="Anclar/Desanclar mensaje">
+                            <i data-lucide="pin" id="reading-icon-pin"></i>
+                        </button>
+                        <button class="icon-action-btn" id="reading-btn-copy" title="Copiar al portapapeles">
+                            <i data-lucide="copy"></i>
+                        </button>
+                    </div>
                     <button class="icon-btn" id="close-reading-modal"><i data-lucide="x"></i></button>
                 </div>
             </div>
@@ -583,20 +591,6 @@
                 <div id="reading-modal-internal-note" class="internal-note-content">
                     <!-- Internal note inserted dynamically -->
                 </div>
-            </div>
-            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px;">
-                <button class="btn-cancel" id="reading-btn-pin" style="display: flex; align-items: center; gap: 6px;">
-                    <i data-lucide="pin" id="reading-icon-pin" style="width: 16px; height: 16px;"></i> Anclar
-                </button>
-                <button class="btn-cancel" id="reading-btn-copy" style="display: flex; align-items: center; gap: 6px;">
-                    <i data-lucide="copy" style="width: 16px; height: 16px;"></i> Copiar
-                </button>
-                <button class="btn-primary" id="reading-btn-edit" style="display: flex; align-items: center; gap: 6px; background-color: var(--primary-color);">
-                    <i data-lucide="edit-2" style="width: 16px; height: 16px;"></i> Editar
-                </button>
-                <button class="btn-primary" id="reading-btn-delete" style="display: flex; align-items: center; gap: 6px; background-color: var(--danger); border-color: var(--danger);">
-                    <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i> Borrar
-                </button>
             </div>
         </div>
     </div>
