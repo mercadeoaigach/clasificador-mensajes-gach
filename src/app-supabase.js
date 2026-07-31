@@ -35,6 +35,13 @@ async function checkAuth() {
     
     // Cargar perfil guardado o default
     loadUserProfile();
+    
+    // Verificar si ya leyó la notificación de la actualización V3
+    if (localStorage.getItem('notifications_v3_update_read_' + currentUser.id) !== 'true') {
+        const dot = document.getElementById('notification-dot');
+        if (dot) dot.style.display = 'block';
+    }
+    
     return true;
 }
 
@@ -1331,7 +1338,7 @@ if (notificationsTrigger && notificationsDropdown) {
             // Marcar como leídas
             notificationDot.style.display = 'none';
             if (currentUser) {
-                localStorage.setItem('notifications_read_' + currentUser.id, 'true');
+                localStorage.setItem('notifications_v3_update_read_' + currentUser.id, 'true');
             }
         }
     });
