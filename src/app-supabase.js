@@ -494,6 +494,12 @@ function renderMessages() {
                         </div>
                     </div>
                     <h3 class="square-card-title">${msg.title}</h3>
+                    ${msg.internal_note ? `
+                    <div class="internal-note-badge" title="Este mensaje contiene una nota interna">
+                        <i data-lucide="alert-circle" style="width: 12px; height: 12px;"></i>
+                        Nota Interna
+                    </div>
+                    ` : ''}
                     <p class="square-card-excerpt" data-id="${msg.id}" title="Clic para expandir" style="cursor: pointer;">${msg.excerpt}</p>
                 </div>
             `;
@@ -852,6 +858,23 @@ function openReadingModal(id) {
     
     document.getElementById('reading-modal-title').textContent = msg.title;
     document.getElementById('reading-modal-content').textContent = msg.excerpt;
+    
+    const internalNoteEl = document.getElementById('reading-modal-internal-note');
+    if (internalNoteEl) {
+        if (msg.internal_note) {
+            internalNoteEl.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px; font-weight: 600;">
+                    <i data-lucide="alert-triangle" style="width: 14px; height: 14px;"></i>
+                    Nota Interna
+                </div>
+                ${msg.internal_note}
+            `;
+            internalNoteEl.style.display = 'block';
+        } else {
+            internalNoteEl.style.display = 'none';
+            internalNoteEl.innerHTML = '';
+        }
+    }
     
     const pinIcon = document.getElementById('reading-icon-pin');
     if (pinIcon) {
