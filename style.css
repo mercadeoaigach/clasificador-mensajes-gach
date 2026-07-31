@@ -632,6 +632,7 @@ body {
     border-radius: 12px;
     margin-bottom: 8px;
     width: fit-content;
+    align-self: flex-start;
     margin-top: 4px;
 }
 
